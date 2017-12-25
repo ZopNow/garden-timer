@@ -404,7 +404,7 @@ void loop() {
   if (switch_state_was != switch_state) {                                         /// switch toggled by the user.... so, water NOW!
     Serial.print("Forced .. Switch : ");
     Serial.print(switch_state);
-    these = (" ONCA");           // O for Orchids, C for Coconut farm, N for Normal  ... manual override activated... so, water everything
+    these = (" ONCAB");           // O for Orchids, C for Coconut farm, N for Normal  ... manual override activated... so, water everything
 
     Serial.print("  Chosen : ");
     Serial.print(these);
