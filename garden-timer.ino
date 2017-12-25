@@ -1,35 +1,24 @@
 /*
-  DOES WORK WITH ARDUINO 1.6.5... remember to update libraries from the pen drive!
-
-  TECH Maali fills the Gaps ... Educated People want gardens, but do not have time...TECH Maali is a serial timer.
-  TECH Maali fills the Gaps ... Ardent Gardeners who spend hours on the garden for watering and maintenance, do not go out of the house .. Marraige / Mandya / Melbourne.
-  TECH Maali fills the Gaps ... Terraces are ideal places for gardens, but do not have pressure. So,TECH Maali is integrated with a pump
-  TECH Maali fills the Gaps ... Employees of farmers Multitask, and turning ON or OFF the pump / valves becomes erratic
-
-  TECH Maali is a Serial Timer that allows water in different pipes for a designated time
-  TECH Maali saves time and saves water
-  TECH Maali helps the environmental friendly global citizen GO GREEN without a daily commitment
-  TECH Maali is designed to negate the slogan : "Technology owes an Apology to Ecology".
-  TECH Maali uses state of art technology in the form of microchips and electromechanincal devices
-  TECH Maali is copyrighted and is NOT for free distribution
-
-  System this version has RTC, debounce, integrated for large and small installation, 3 phase pump, suspend and beep on power absent, suspend and beep on water low, rain dance
-  what's next : LED blink / humidity sensor / temperature sensor /
-  //-----------------------------------------------------------------------------------------------------------------
-  This unit is for the exclusive use of :vikas, harlur
-  Topology :
-  Pipe#  Cluster
-
   A  1...2' planters left
   A  2...2' planters right
   A  3...3' planters 
   A  4...60 wall garden
-  A  5...20 wall garden
+  A  5...20 wall garden + 8 pots
   B  9...planter
   B  10..green house
   B  11...pots
   B  12...Rain Dance (Put R as 12th digit in type_of_zone3)
 */
+
+/*
+ * Type of Zones:
+ *    N: Normal
+ *    R: Rain Dance
+ *    A: Alternate days
+ * 
+ */
+
+
 const int number_of_pipes            = 12; // the delay required for an audible click
 const int how_many_times_in_a_day    = 2; // the delay required for an audible click
 const int start_time[] = {                 // at the clock hour that the flow should start range is 0..23
@@ -37,7 +26,7 @@ const int start_time[] = {                 // at the clock hour that the flow sh
 };
 
 const int flow_time[] = {                   // in seconds remember, one hour has 3600 seconds!
-  10, 10, 15, 8, 10, 0, 0, 0,
+  10, 10, 15, 30, 30, 0, 0, 0,
   90,90,60,180,0,0,0,0,
   0};
 //.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
@@ -51,7 +40,7 @@ const int regulator[] = {                 // pipewise motor speed control values
 //                                                                E  N  D     O  F    S  I  M  P  L  E      P  A  R  A  M  A  T  E  R  S
 //                                                      0000000001111111111222222222233333333334444444444555555555566666
 //                                                      1234567890123456789012345678901234567890123456789012345678901234
-String  type_of_zone                      = String    ("NNNNNNNNNNNRNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");           // O for Orchids, C for Coconut farm, N for Normal
+String  type_of_zone                      = String    ("NNNAANNNNNNRNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");           // O for Orchids, C for Coconut farm, N for Normal
 const int coconut_days                    = 3;  // once in so many days
 const int coconut_time                    = 13;  // time of day to water coconut farm
 const int orchids_watering                = 1;  // once in so many hours
@@ -415,7 +404,7 @@ void loop() {
   if (switch_state_was != switch_state) {                                         /// switch toggled by the user.... so, water NOW!
     Serial.print("Forced .. Switch : ");
     Serial.print(switch_state);
-    these = (" ONC");           // O for Orchids, C for Coconut farm, N for Normal  ... manual override activated... so, water everything
+    these = (" ONCA");           // O for Orchids, C for Coconut farm, N for Normal  ... manual override activated... so, water everything
 
     Serial.print("  Chosen : ");
     Serial.print(these);
@@ -486,6 +475,13 @@ void loop() {
           these = these + "O"; // O for Orchids, C for Coconut farm, N for Normal
         }
       }
+
+      if (((tm.Day % 2) == 0)) {
+        if (start_time[0] == tm.Hour ) {
+          these = these + "A"; 
+        }
+      }
+      
       if (((tm.Day % coconut_days) == 0) &&  (temporary == coconut_time)) {
         these = these + "C"; // O for Orchids, C for Coconut farm, N for Normal
       }
