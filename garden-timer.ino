@@ -15,7 +15,7 @@
  *    N: Normal
  *    R: Rain Dance
  *    A: Alternate days
- * 
+ *    B: Once a day
  */
 
 
@@ -27,7 +27,7 @@ const int start_time[] = {                 // at the clock hour that the flow sh
 
 const int flow_time[] = {                   // in seconds remember, one hour has 3600 seconds!
   10, 10, 15, 30, 30, 0, 0, 0,
-  90,90,60,180,0,0,0,0,
+  90,90,90,180,0,0,0,0,
   0};
 //.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
 const int regulator[] = {                 // pipewise motor speed control values 2 upwards, larger the number, slower the motor
@@ -40,7 +40,7 @@ const int regulator[] = {                 // pipewise motor speed control values
 //                                                                E  N  D     O  F    S  I  M  P  L  E      P  A  R  A  M  A  T  E  R  S
 //                                                      0000000001111111111222222222233333333334444444444555555555566666
 //                                                      1234567890123456789012345678901234567890123456789012345678901234
-String  type_of_zone                      = String    ("NNNAANNNNNNRNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");           // O for Orchids, C for Coconut farm, N for Normal
+String  type_of_zone                      = String    ("NNNAANNNNNBRNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");           // O for Orchids, C for Coconut farm, N for Normal
 const int coconut_days                    = 3;  // once in so many days
 const int coconut_time                    = 13;  // time of day to water coconut farm
 const int orchids_watering                = 1;  // once in so many hours
@@ -480,6 +480,10 @@ void loop() {
         if (start_time[0] == tm.Hour ) {
           these = these + "A"; 
         }
+      }
+      
+      if (start_time[0] == tm.Hour ) {
+          these = these + "B"; 
       }
       
       if (((tm.Day % coconut_days) == 0) &&  (temporary == coconut_time)) {
