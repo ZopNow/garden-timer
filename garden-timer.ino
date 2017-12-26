@@ -36,14 +36,7 @@ const int flow_time[] = {                   // in seconds remember, one hour has
 //                                                                E  N  D     O  F    S  I  M  P  L  E      P  A  R  A  M  A  T  E  R  S
 //                                                      0000000001111111111222222222233333333334444444444555555555566666
 //                                                      1234567890123456789012345678901234567890123456789012345678901234
-String  type_of_zone                      = String    ("NNNAANNNNNBRNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");           // O for Orchids, C for Coconut farm, N for Normal
-const int coconut_days                    = 3;  // once in so many days
-const int coconut_time                    = 13;  // time of day to water coconut farm
-const int orchids_watering                = 1;  // once in so many hours
-const int orchid_cycle_2_days             = 2;  // once in so many days
-const int orchid_cycle_2_time             = 10;  // time of day to water coconut farm
-const int night_start                     = 18;                 // normally night starts at 6pm
-const int night_end                       = 6;                    // normally night ends at this time
+String  type_of_zone                      = String    ("NNNAANNNNNBRNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");           // As defined on TOP. 
 
 
 const int number_of_drain_zones          =  0;                  // the start and end zones on the matrix
@@ -99,7 +92,7 @@ boolean motor_on = LOW;                  // MOTOR will come on when the signal i
 // On using SSR other than TECH Maali Board, motor_on parameter has to be HIGH.
 // On using SSR on TECH Maali Board, motor_on parameter has to be  LOW because we use the resistor!li
 boolean light_on = LOW;                  // Light will come on when the signal is high / low on the motor pin
-boolean water_orchids_at_night = LOW;   // Here, we decide if the client wants watering of the orchids in the night too.
+
 boolean detect_power = LOW;            // power detection circuit will give a low signal when power exists
 boolean detect_water = HIGH;            // power detection circuit will give a low signal when power exists
 
@@ -168,7 +161,7 @@ int pauseBetweenRhythm = 100;              // another delay parameter
 int justlikethati = 910;
 
 //String  show_this_line = String (" ");           // a buffer string to build up full line displays
-String  these = String ("    ");           // O for Orchids, C for Coconut farm, N for Normal  note : leading space is essential!
+String  these = String ("    ");           // note : leading space is essential!
 
 
 
@@ -202,8 +195,6 @@ void setup() {
   Serial.print("TECH Maali _v2 ..Force Switch on Digial Pin ");
 
   Serial.print(".. Rain Dance ");
-
-  Serial.print(".. Dual watering for Orchids ");
 
   Serial.print(".. Suspend on Power Detect is ");
 
@@ -243,30 +234,7 @@ void setup() {
     Serial.println( "Disabled... will not suspend for Water outage");
   }
 
-  Serial.print("Coconut Farm will water once in ");
-  Serial.print(coconut_days);
-  Serial.print(" days at ");
-  Serial.print(coconut_time);
-  Serial.println(" Hours");
 
-  Serial.print("Orchids will water every ");
-  Serial.print(orchids_watering);
-  Serial.print(" Hours .. will");
-  if (!water_orchids_at_night) {
-    Serial.print(" not");
-  }
-  Serial.println( " water at night...");
-
-  Serial.print("Orchids will again water once in ");
-  Serial.print(orchid_cycle_2_days);
-  Serial.print(" days at ");
-  Serial.print(orchid_cycle_2_time);
-  Serial.println(" Hours");
-
-  Serial.print("Night Starts at : ");
-  Serial.print(night_start);
-  Serial.print(" and Ends at : ");
-  Serial.println(night_end);
 
   for (int thisrelay = solenoid_connector_start_pin; thisrelay <= LED; thisrelay++) {
     if (thisrelay != force_switch)    {
@@ -368,7 +336,7 @@ void loop() {
   if (switch_state_was != switch_state) {                                         /// switch toggled by the user.... so, water NOW!
     Serial.print("Forced .. Switch : ");
     Serial.print(switch_state);
-    these = (" ONCAB");           // O for Orchids, C for Coconut farm, N for Normal  ... manual override activated... so, water everything
+    these = (" NAB");           // manual override activated... so, water everything
 
     Serial.print("  Chosen : ");
     Serial.print(these);
@@ -384,7 +352,7 @@ void loop() {
   if (rain_dance_switch_status == HIGH) {                                         /// switch pressed by the user.... so, rain dance NOW!
     Serial.print("Forced .. RAIN_DANCE : ");
     Serial.print(switch_state);
-    these = (" R");           // R for Rain Dance, O for Orchids, C for Coconut farm, N for Normal  ... manual override activated... so, water everything
+    these = (" R");           // R for Rain Dance,  manual override activated... so, water everything
 
     Serial.print("  Chosen : ");
     Serial.print(these);
@@ -409,36 +377,14 @@ void loop() {
 
     if ((temporary != tm.Hour ) && (tm.Minute == 0) && (tm.Second == 0)) {                                   // enter only on the stroke of the hour
       temporary = tm.Hour;
-      // we now check if the night light switch should be on or off also, flag for the orchids garden.
-      if (night_start > night_end) {
-        if (  (temporary < night_start) && (temporary >= night_end) ) it_is_night_now = LOW;                 // so, it is day now
-        else         it_is_night_now = HIGH;                                                                  // so, it is night now
-      }
-      else {
-        if ((temporary < night_start) || (temporary >= night_end))  it_is_night_now = LOW;                       // so, it is day now
-        else it_is_night_now = HIGH;                                                                          // so, it is night now
-      }
-
-      if (it_is_night_now) {
-        //digitalWrite (lights_pin, light_on);                                                                  // turn ON the lights
-        Serial.println ("It is night now");
-      }
-      else {
-        //digitalWrite (lights_pin, !light_on);                                                                  // turn OFF the lights
-        Serial.println ("It is day now");
-      }
-      // this is where you check for orchids... etc...
-      //   build the string of these gardens whose time has come to water
+      
+      //   build the string of these gardens zones whose time has come to water
       for (int i = 0; i < how_many_times_in_a_day ; i++) {                        //normal garden screening :
         if (start_time[i] == tm.Hour ) {
-          these = these + "N";           // O for Orchids, C for Coconut farm, N for Normal
+          these = these + "N";           
         }
       }
-      if (!((it_is_night_now) && !(water_orchids_at_night))) {                  //  conditional watering only for orchids...
-        if ((tm.Hour % orchids_watering) == 0)  {
-          these = these + "O"; // O for Orchids, C for Coconut farm, N for Normal
-        }
-      }
+
 
       if (((tm.Day % 2) == 0)) {
         if (start_time[0] == tm.Hour ) {
