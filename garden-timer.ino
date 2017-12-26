@@ -12,16 +12,16 @@
 
 /*
  * Type of Zones:
- *    N: Normal
  *    R: Rain Dance
  *    A: Alternate days
  *    B: Once a day
+ *    N: n-times a day
  */
 
 
 const int number_of_pipes            = 12; // the delay required for an audible click
-const int how_many_times_in_a_day    = 2; // the delay required for an audible click
-const int start_time[] = {                 // at the clock hour that the flow should start range is 0..23
+const int how_many_times_in_a_day    = 2; // N type zone will use this. 
+const int start_time[] = {                // at the clock hour that the flow should start range is 0..23. N times will read first N number. A/B type will read first number. 
   7, 17,
 };
 
@@ -31,15 +31,10 @@ const int flow_time[] = {                   // in seconds remember, one hour has
   0
 };
 
+//                                  0000000001111111111222222222233333333334444444444555555555566666
+//                                  1234567890123456789012345678901234567890123456789012345678901234
+String  type_of_zone  = String    ("NNNAANNNNNBRNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN"); // As defined on TOP. First number_of_pipes chars will be read. 
 
-//-----------------------------------------------------------------------------------------------------------------
-//                                                                E  N  D     O  F    S  I  M  P  L  E      P  A  R  A  M  A  T  E  R  S
-//                                                      0000000001111111111222222222233333333334444444444555555555566666
-//                                                      1234567890123456789012345678901234567890123456789012345678901234
-String  type_of_zone                      = String    ("NNNAANNNNNBRNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");           // As defined on TOP. 
-
-//                                                                E  N  D     O  F    C  O  M  P  L  E  X      P  A  R  A  M  A  T  E  R  S
-//-----------------------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------------------
 //TECH Maali has the following feedback sounds for client observation:
 
@@ -106,7 +101,6 @@ const int Rain_Dance_Treshold         = 950;
 const int samples                     = 1000;
 const int Power_Detect_Treshold       = 950;               // power is on @ around 855 - 876, and off @ around 1020
 const int Water_Detect_Treshold       = 950;               // power is on @ around 855 - 876, and off @ around 1020
-//const int Force_Switch_Treshold       = 950;
 const int Soil_Moisture_Treshold      = 800;
 const int Daylight_Treshold           = 800;
 const int Humidity_Treshold           = 800;
@@ -116,9 +110,7 @@ const int pH_Treshold                 = 1800;
 //                                                       Define all analog pins to be used.
 
 #define RAIN_DANCE          A0               // Push button switch will trigger the rain dance cycle onto the last solenoid
-//#define UT_BROWN            A1               // Upper Tank Brown wire .... connects to float ... Will read LOW when tank is full
 #define LT_BLUE            A2               //  Water Tank Blue wire  .... connects to float ... Will read LOW when tank is empty
-//#define FORCE_SWITCH       A2               // Upper Tank NEW wire .... connects to flow sensor ... Will read LOW when water is flowing
 #define POWER_DETECT_PIN   A3               // for opto_coupler sensor plugging .... will effect scheduled watering only when Day
 #define HUMIDITY           A4               // for opto_coupler sensor plugging .... will effect scheduled watering only when Day
 
@@ -171,19 +163,7 @@ void setup() {
   digitalWrite(LT_BLUE, HIGH);
   pinMode(POWER_DETECT_PIN, INPUT);
   digitalWrite(POWER_DETECT_PIN, HIGH);
-  //pinMode(FORCE_SWITCH, INPUT);
-  //digitalWrite(FORCE_SWITCH, HIGH);
-  /*                      this code is replicated for the sake of understanding the way the PString works
 
-    str.begin();
-    str.print("The magic of str, starts here :The value of Secs is ");
-    int current_millis_value = millis();
-    str.print(current_millis_value);
-    str.print(" I am amazed ! Iteration is ");
-    str.print(iteration);
-
-    my_print(str);
-  */
   Serial.print("TECH Maali _v2 ..Force Switch on Digial Pin ");
 
   Serial.print(".. Rain Dance ");
@@ -245,9 +225,7 @@ void setup() {
   tmElements_t tm;
   if (RTC.read(tm))   temporary = tm.Hour;
 
-  /*  Serial.print(" Hr      Probe : ");
-    Serial.print(analogRead(probe));
-  */
+
   Serial.print("  Zones : ");
   Serial.print(number_of_pipes);
   debouncer.update();
@@ -277,7 +255,6 @@ void setup() {
   }
   Serial.println("");
   Initialize_device();
-  //digitalWrite (lights_pin, !light_on);                                     //turn off light controller
   displaytime();
   hum_taiyaar_hai();
 }                                                                          // end of setup
@@ -287,8 +264,6 @@ void  displaytime() {
   tmElements_t tm;
   if (RTC.read(tm))
     Serial.print("  Now the time reads : ");
-  //      Serial.print("Ok, Time = ");
-  //print2digits(temporary);
   print2digits(tm.Hour);
   Serial.write(':');
   print2digits(tm.Minute);
@@ -323,8 +298,7 @@ void loop() {
   these = " ";
   debouncer.update();
   switch_state = debouncer.read();
-  //    Serial.println(switch_state);
-  //switch_state = digitalRead(FORCE_SWITCH);
+
   if (switch_state_was != switch_state) {                                         /// switch toggled by the user.... so, water NOW!
     Serial.print("Forced .. Switch : ");
     Serial.print(switch_state);
@@ -398,12 +372,6 @@ void loop() {
 
 
 void Initialize_device() {
-  //PORTB = B00000101 ; // does a high on 8 & 10 for enabling the 74LS138
-  // init all relays for low state so that there is no wasteage.
-  // give a click on all relays, so that user is comfortable
-  //  Serial.println("");//hoho
-
-  //  Serial.println();
   Serial.print  ("  Durations : ");
   digitalWrite (Motor, motor_on);                                 // turn ON the motor
   digitalWrite (Starter_ON, HIGH);
@@ -474,7 +442,7 @@ void Water_the_garden(String selected) {
 
 
   for (int thisrelay = 0; thisrelay < number_of_pipes ; thisrelay++) {          // ... serious business... watering cycle starts
-    ///
+    
     int     flow_secs = 0;
     char this_garden_is = type_of_zone.charAt(thisrelay) ;                    // ... determine the type of garden for this relay
     Serial.println();
@@ -499,7 +467,7 @@ void Water_the_garden(String selected) {
     Serial.print(" >> ");
 
     PORTD = (thisrelay << solenoid_connector_start_pin) ; // ... turn ON relevant device... shift left command used
-    //    Serial.print(endtime);
+    
 
     for (int time_left = flow_secs; time_left > 0; time_left--) {                     // ... Click Click until end time is reached
       tone(speaker, 5000); // hf click on the speaker
@@ -509,27 +477,20 @@ void Water_the_garden(String selected) {
 
       boolean POWER_PRESENT = LOW;
       POWER_PRESENT = ReadSens_and_Condition(POWER_DETECT_PIN, Power_Detect_Treshold);
-      //Serial.println(sens);             // debug value
 
       while (detect_power && !POWER_PRESENT) {                            // suspend count for power fail condition
         PORTD = 0777 ;                                                    // to turn off all the devices otherwise, LED will remain on using up precious battery backup power
         digitalWrite (Motor, !motor_on);                                 // turn OFF the motor otherwise, LED will remain on using up precious battery backup power
-      
         delay (200);
         POWER_PRESENT = ReadSens_and_Condition(POWER_DETECT_PIN, Power_Detect_Treshold);
-        //  Serial.println(sens);             // debug value
         digitalWrite (LED, !digitalRead(LED));                              // toggle LED
       };                                    //wait for power to come on
 
 
-
-
       // check out if water is on
-      //      boolean is_the_power_on = digitalRead (POWER_DETECT_PIN);
       boolean WATER_ABSENT = LOW;
       WATER_ABSENT = ReadSens_and_Condition(LT_BLUE, Water_Detect_Treshold);
-      //Serial.println(sens);             // debug value
-
+      
       while (detect_water && WATER_ABSENT) {                            // suspend count for power fail condition
         PORTD = 0777 ;                                                    // to turn off all the devices otherwise, LED will remain on using up precious battery backup power
         digitalWrite (Motor, !motor_on);                                 // turn OFF the motor otherwise, LED will remain on using up precious battery backup power
@@ -543,10 +504,6 @@ void Water_the_garden(String selected) {
         digitalWrite (LED, !digitalRead(LED));                              // toggle LED
         //  Serial.println(sens);             // debug value
       };                                    //wait for power to come on
-
-
-
-
 
 
 
@@ -604,16 +561,7 @@ boolean ReadSens_and_Condition(int THIS_PIN, int THIS_TRESHOLD) {
   }
 
   sval = sval / samples;    // average
-  /*    Serial.print (THIS_PIN);
-    Serial.print (',');
-    Serial.println (sval);*/
-  // Serial.print (" ");
-  //int mapped = map(sval, 800, 1100, 0, 500);
-  //sval = sval *2;    // scale (0 - 1000)
-  //sval = 1024 - sval;  // invert output
-  //      Serial.print(sens);
-  //  Serial.print(" / ");
-  //Serial.print(power_detect_treshold);
+ 
   if (sval < THIS_TRESHOLD) {
     //    Serial.print(" Lower, so, Power Present");
     IS_PRESENT = HIGH;
