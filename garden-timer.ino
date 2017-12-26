@@ -38,14 +38,6 @@ const int flow_time[] = {                   // in seconds remember, one hour has
 //                                                      1234567890123456789012345678901234567890123456789012345678901234
 String  type_of_zone                      = String    ("NNNAANNNNNBRNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");           // As defined on TOP. 
 
-
-const int number_of_drain_zones          =  0;                  // the start and end zones on the matrix
-const int time_to_drain                  =  0;                  // the start and end zones on the matrix
-const int drain_zones[] = {                 // in seconds remember, one hour has 3600 seconds!
-  2, 4,
-  0
-};
-
 //                                                                E  N  D     O  F    C  O  M  P  L  E  X      P  A  R  A  M  A  T  E  R  S
 //-----------------------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------------------
@@ -587,20 +579,6 @@ void Water_the_garden(String selected) {
   // this code is inserted to drain the feeder pipe quickly, to reduce the carrying load on the pressure pipe
   Serial.print("Draining.... ");
 
-  for (int drains_i = 0; drains_i < number_of_drain_zones; drains_i++) {
-    int thisrelay = (drain_zones[drains_i] - 1);                                  // this is only right
-    Serial.print("Pipe # : ");
-    Serial.println(thisrelay + 1);                                                // this is only right
-
-    PORTD = (thisrelay << solenoid_connector_start_pin) ;                                       // ... turn ON relevant device
-    for (int time_left = time_to_drain; time_left > 0; time_left--) {                     // ... Click Click until end time is reached
-      delay (1000);
-      Serial.print("> ");
-      if (((time_left) % 5) == 0)          digitalWrite (LED, HIGH);                              // while watering, duty cycle of 1:3 is desirable
-      else         digitalWrite (LED, LOW);        // toggle LED
-    }
-
-  }
   PORTD = 0777 ; // to turn off all the devices otherwise, last relay will remain on till next cycle
 
   Serial.println("Draining done. ");
