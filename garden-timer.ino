@@ -1,7 +1,7 @@
 /*
   A  1...2' planters left
   A  2...2' planters right
-  A  3...3' planters 
+  A  3...3' planters
   A  4...60 wall garden
   A  5...20 wall garden + 8 pots
   B  9...planter
@@ -26,16 +26,12 @@ const int start_time[] = {                 // at the clock hour that the flow sh
 };
 
 const int flow_time[] = {                   // in seconds remember, one hour has 3600 seconds!
-  10, 10, 15, 30, 30, 0, 0, 0,
-  90,90,90,180,0,0,0,0,
-  0};
-//.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
-const int regulator[] = {                 // pipewise motor speed control values 2 upwards, larger the number, slower the motor
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, // exceptions : 0 turns motor off, 1 runs it at full speed.
-  1, 1, 1, 1, 1, 1, 1, 1, // exceptions : 0 turns motor off, 1 runs it at full speed.
-  1
+  10, 10, 15, 30, 30, 0, 0, 0,    // Board # A
+  90, 90, 90, 180, 0, 0, 0, 0,    // Board # B
+  0
 };
+
+
 //-----------------------------------------------------------------------------------------------------------------
 //                                                                E  N  D     O  F    S  I  M  P  L  E      P  A  R  A  M  A  T  E  R  S
 //                                                      0000000001111111111222222222233333333334444444444555555555566666
@@ -48,12 +44,8 @@ const int orchid_cycle_2_days             = 2;  // once in so many days
 const int orchid_cycle_2_time             = 10;  // time of day to water coconut farm
 const int night_start                     = 18;                 // normally night starts at 6pm
 const int night_end                       = 6;                    // normally night ends at this time
-const int flow_cycle_2[] = {                 // in seconds remember, one hour has 3600 seconds!
-  0, 0, 0, 0, 0, 0, 0, 0,                  // Board # A
-  0, 0, 0, 0, 0, 0, 0, 0,                  // Board # B
-  0, 0, 0, 0, 0, 0, 0, 0,                  // Board # C
-  0
-};
+
+
 const int number_of_drain_zones          =  0;                  // the start and end zones on the matrix
 const int time_to_drain                  =  0;                  // the start and end zones on the matrix
 const int drain_zones[] = {                 // in seconds remember, one hour has 3600 seconds!
@@ -178,19 +170,6 @@ int justlikethati = 910;
 //String  show_this_line = String (" ");           // a buffer string to build up full line displays
 String  these = String ("    ");           // O for Orchids, C for Coconut farm, N for Normal  note : leading space is essential!
 
-
-
-/*
-   const int samples                     = 1000;
-  const int Power_Detect_Treshold       = 950;               // power is on @ around 855 - 876, and off @ around 1020
-  const int Force_Switch_Treshold       = 950;
-  const int Soil_Moisture_Treshold      = 800;
-  const int Rain_Treshold               = 800;
-  const int Daylight_Treshold           = 800;
-  const int Humidity_Treshold           = 800;
-  const int pH_Treshold                 = 1800;
-
-*/
 
 
 //--------------------------------------------------------------------------------------------------------------------------------------------
@@ -323,22 +302,7 @@ void setup() {
     Serial.print(start_time[thisrelay]);
     Serial.print(";  ");
   }
-  /*
-    Serial.print  ("\n  Regulator : ");
 
-    //show_page();
-    for (int thisrelay = 0; thisrelay < number_of_pipes; thisrelay++) {
-    Serial.print(" # ");
-    print2digits(thisrelay + 1);
-    Serial.print(" : ");
-    Serial.print(regulator[thisrelay]);                              // feedback on regulator parameters
-    Serial.print(",  ");
-    if (((thisrelay + 1) % 8) == 0)  {
-    Serial.println("  ");
-    Serial.print("              ");
-    }
-    }
-  */
   Serial.print("\n  Zone Type : ");
   for (int thisrelay = 0; thisrelay < number_of_pipes; thisrelay++) {
     Serial.print(" # ");
@@ -410,7 +374,7 @@ void loop() {
     Serial.print(these);
     Serial.print("**  Length : ");
     Serial.println(these.length());
-    Water_the_garden(these, 1);
+    Water_the_garden(these);
     //    waterthegarden();
   }
   ;
@@ -426,7 +390,7 @@ void loop() {
     Serial.print(these);
     Serial.print("**  Length : ");
     Serial.println(these.length());
-    Water_the_garden(these, 1);
+    Water_the_garden(these);
     //    waterthegarden();
   }
 
@@ -478,24 +442,16 @@ void loop() {
 
       if (((tm.Day % 2) == 0)) {
         if (start_time[0] == tm.Hour ) {
-          these = these + "A"; 
+          these = these + "A";
         }
       }
-      
+
       if (start_time[0] == tm.Hour ) {
-          these = these + "B"; 
+        these = these + "B";
       }
+
+      Water_the_garden(these);
       
-      if (((tm.Day % coconut_days) == 0) &&  (temporary == coconut_time)) {
-        these = these + "C"; // O for Orchids, C for Coconut farm, N for Normal
-      }
-      //temporary = tm.Hour;
-      Water_the_garden(these, 1);
-      //these = " ";
-      if (((tm.Day % orchid_cycle_2_days) == 0) &&  (temporary == orchid_cycle_2_time)) {                     // to be tested extensively
-        these = " O"; // O for Orchids, C for Coconut farm, N for Normal
-        Water_the_garden(these, 2);                                                  // Gayatri Rao Reqest for second cycle for orchids
-      }
       hum_taiyaar_hai();
     }
   }
@@ -532,18 +488,7 @@ void Initialize_device() {
     PORTD = 0777 ; // to turn off all the devices
     delay(200);
   }
-  Serial.print  ("\n  2nd  Pass : ");                                                         // displaying this puts our memory under deep stress... malfunctions.
-  for (int thisrelay = 0; thisrelay < number_of_pipes; thisrelay++) {
-    Serial.print(" # ");
-    print2digits(thisrelay + 1);
-    Serial.print(" : ");
-    Serial.print(flow_cycle_2[thisrelay]);
-    Serial.print(",  ");
-    if (((thisrelay + 1) % 8) == 0)  {
-      Serial.println("  ");
-      Serial.print("              ");
-    }
-  }
+ 
 
   Serial.println("");
   Serial.println("  TECH Maali Initialised... ");
@@ -575,18 +520,16 @@ void  init_click_on_speaker() { // plays a beep on the speaker during init cycle
 }
 
 
-void Water_the_garden(String selected, int pass_no) {
-  Serial.print("  TECH Maali Watering Cycle # : ");
-  Serial.println(pass_no);
+void Water_the_garden(String selected) {
+
   displaytime();
 
-  ///
   int variations = (selected.length());                                       // ... inform user interface about the type of variations that will be watered now!
   Serial.print("  Variations = ");
   Serial.print(selected);
   Serial.print("  length = ");
   Serial.println(variations);
-  ///
+
   digitalWrite (Starter_ON, HIGH);
   delay (intra_packet);
   digitalWrite (Starter_ON, LOW);
@@ -602,25 +545,15 @@ void Water_the_garden(String selected, int pass_no) {
     Serial.print(" ... ");
 
     int should_flow = selected.indexOf(this_garden_is);                         // ... determine if water should flow in this relay
-    if (should_flow > 0 ) {
-      if (pass_no == 1) {
+    if (should_flow > 0 ) { 
         flow_secs = flow_time[thisrelay];                     // ... set time of flowing for this relay.... non zero value
-      }
-      else {
-        flow_secs = flow_cycle_2[thisrelay];                     // ... set time of flowing for this relay.... non zero value
-      }
     }
-    ///
-    //    for (int beeps = 0; beeps < thisrelay + 1; beeps++) { // relay # to be conveyed using the speaker
+
+
     if (flow_secs > 0) {
-      //tone(speaker, 5000);
-      //delay(100);
-      //noTone(speaker);
-      //delay(100);
       digitalWrite (Motor, motor_on);                                               // ... turn ON the Motor
-      //      digitalWrite (LED, HIGH);
     }
-    //}
+ 
 
     print2digits(thisrelay + 1);                                              // for human interface....
     Serial.print(" Tube ... Secs :");
@@ -635,20 +568,7 @@ void Water_the_garden(String selected, int pass_no) {
       delay(clicker * 20);
       noTone(speaker);
       delay(justlikethati);
-      /*      for (int justlikethati = 0; justlikethati < 910; justlikethati++) {             // ... we have achieved a PWM control of the Motor here
-        if ((justlikethati) % (regulator[thisrelay]) != 0) {
-        digitalWrite (Motor, !motor_on);         // ... turn OFF the Motor
-        //        Serial.print("m");                                                          // ... diagnostics
-        }
-        else     {
-        digitalWrite (Motor, motor_on);         // ... turn ON the Motor
-        //        Serial.print("M");                                                          // ... diagnostics
-        }
-        delay(1);
-        }
-      */
-      // check out if power is on
-      //      boolean is_the_power_on = digitalRead (POWER_DETECT_PIN);
+
       boolean POWER_PRESENT = LOW;
       POWER_PRESENT = ReadSens_and_Condition(POWER_DETECT_PIN, Power_Detect_Treshold);
       //Serial.println(sens);             // debug value
@@ -656,11 +576,7 @@ void Water_the_garden(String selected, int pass_no) {
       while (detect_power && !POWER_PRESENT) {                            // suspend count for power fail condition
         PORTD = 0777 ;                                                    // to turn off all the devices otherwise, LED will remain on using up precious battery backup power
         digitalWrite (Motor, !motor_on);                                 // turn OFF the motor otherwise, LED will remain on using up precious battery backup power
-        /*        Serial.print (" Power gone, value :");
-          Serial.print (sens);
-          Serial.print (" / ");
-          Serial.println (power_detect_treshold);
-        */
+      
         delay (200);
         POWER_PRESENT = ReadSens_and_Condition(POWER_DETECT_PIN, Power_Detect_Treshold);
         //  Serial.println(sens);             // debug value
@@ -679,11 +595,7 @@ void Water_the_garden(String selected, int pass_no) {
       while (detect_water && WATER_ABSENT) {                            // suspend count for power fail condition
         PORTD = 0777 ;                                                    // to turn off all the devices otherwise, LED will remain on using up precious battery backup power
         digitalWrite (Motor, !motor_on);                                 // turn OFF the motor otherwise, LED will remain on using up precious battery backup power
-        /*        Serial.print (" Power gone, value :");
-          Serial.print (sens);
-          Serial.print (" / ");
-          Serial.println (power_detect_treshold);
-        */
+   
         for (int i = 0; i <= 1; i++) {                                        // double beep  ... indicates that lower tank is empty
           click();
           delay(200);                                                     //
@@ -727,20 +639,12 @@ void Water_the_garden(String selected, int pass_no) {
   digitalWrite (Starter_OFF, LOW);
 
   // this code is inserted to drain the feeder pipe quickly, to reduce the carrying load on the pressure pipe
-  /*const int number_of_drain_zones          =  2;                  // the start and end zones on the matrix
-    const int time_to_drain                  =  10;                  // the start and end zones on the matrix
-    const int drain_zones[] = {                 // in seconds remember, one hour has 3600 seconds!
-    1,6,
-    0
-    };
-
-  */  ///////////////
   Serial.print("Draining.... ");
 
   for (int drains_i = 0; drains_i < number_of_drain_zones; drains_i++) {
-    int thisrelay = (drain_zones[drains_i]-1);                                    // this is only right
+    int thisrelay = (drain_zones[drains_i] - 1);                                  // this is only right
     Serial.print("Pipe # : ");
-    Serial.println(thisrelay+1);                                                  // this is only right
+    Serial.println(thisrelay + 1);                                                // this is only right
 
     PORTD = (thisrelay << solenoid_connector_start_pin) ;                                       // ... turn ON relevant device
     for (int time_left = time_to_drain; time_left > 0; time_left--) {                     // ... Click Click until end time is reached
@@ -804,7 +708,6 @@ boolean ReadSens_and_Condition(int THIS_PIN, int THIS_TRESHOLD) {
 
 
 void click() {
-
   digitalWrite(speaker, HIGH);   // turn the LED on (HIGH is the voltage level)
   delay(30);
   digitalWrite(speaker, LOW);   // turn the LED on (HIGH is the voltage level)
